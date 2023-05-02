@@ -33,13 +33,17 @@ References:
 # Tests
 ################################################################################
 
+import sys
+
 import numpy as np
 import pytest
-from poibin import PoiBin
 from scipy.stats import binom
 
+sys.path.append("poibin/")
+from poibin import PoiBin
 
 # PoiBin.pmf -------------------------------------------------------------------
+
 
 def test_pmf():
     """Test the probability mass function.
@@ -59,13 +63,21 @@ def test_pmf():
     res_ref = np.array([0.0120647, 0.39129134, 0.46189012, 0.13475384])
     assert np.all(np.abs(res - res_ref) < 1e-8)
 
-    p = [0.9955901, 0.5696224, 0.8272597, 0.3818746, 0.4290036, 0.8707646,
-         0.8858267, 0.7557183]
+    p = [
+        0.9955901,
+        0.5696224,
+        0.8272597,
+        0.3818746,
+        0.4290036,
+        0.8707646,
+        0.8858267,
+        0.7557183,
+    ]
     pb = PoiBin(p)
     res = pb.pmf([0, 2, 7, 8])
-    res_ref = np.array([4.17079659e-07, 2.46250608e-03, 2.02460933e-01,
-                        4.48023378e-02])
+    res_ref = np.array([4.17079659e-07, 2.46250608e-03, 2.02460933e-01, 4.48023378e-02])
     assert np.all(np.abs(res - res_ref) < 1e-8)
+
 
 def test_pmf_pb_binom():
     """Compare the probability mass function with the binomial limit case."""
@@ -84,6 +96,7 @@ def test_pmf_pb_binom():
     bn = binom(2, p=0.5)
     assert int(bn.pmf(0) * 10000) != int(pb.pmf(0) * 10000)
 
+
 def test_pmf_accuracy():
     """Compare accuracy of the probability mass function.
 
@@ -91,7 +104,7 @@ def test_pmf_accuracy():
     equation (15).
     """
     [p1, p2, p3] = np.around(np.random.random_sample(size=3), decimals=2)
-    [n1, n2, n3] = np.random.random_integers(1, 10, size=3)
+    [n1, n2, n3] = np.random.randint(1, 11, size=3)
     nn = n1 + n2 + n3
     l1 = [p1 for i in range(n1)]
     l2 = [p2 for i in range(n2)]
@@ -102,22 +115,24 @@ def test_pmf_accuracy():
     b3 = binom(n=n3, p=p3)
     k = np.random.randint(0, nn + 1)
     chi_bn = 0
-    for j in range(0, k+1):
-        for i in range(0, j+1):
+    for j in range(0, k + 1):
+        for i in range(0, j + 1):
             chi_bn += b1.pmf(i) * b2.pmf(j - i) * b3.pmf(k - j)
     pb = PoiBin(p)
     chi_pb = pb.pmf(k)
-    assert np.all(np.around(chi_bn, decimals=10) == np.around(chi_pb,
-                                                              decimals=10))
+    assert np.all(np.around(chi_bn, decimals=10) == np.around(chi_pb, decimals=10))
+
 
 # PoiBin.cdf ------------------------------------------------------------------
+
 
 def test_cdf():
     """Test the cumulative distribution function."""
     p = [1, 1]
     pb = PoiBin(p)
-    assert np.all(pb.cdf([1, 2]) - np.array([0., 1.]) < 4 * np.finfo(float).eps)
-    assert (pb.cdf(2) - 1.) < 4 * np.finfo(float).eps
+    assert np.all(pb.cdf([1, 2]) - np.array([0.0, 1.0]) < 4 * np.finfo(float).eps)
+    assert (pb.cdf(2) - 1.0) < 4 * np.finfo(float).eps
+
 
 def test_cdf_pb_binom():
     """Compare the cumulative distribution function with the binomial limit
@@ -137,6 +152,7 @@ def test_cdf_pb_binom():
     bn = binom(2, p=0.5)
     assert int(bn.cdf(0) * 10000) != int(pb.cdf(0) * 10000)
 
+
 def test_cdf_accuracy():
     """Compare accuracy of the cumulative distribution function.
 
@@ -145,29 +161,29 @@ def test_cdf_accuracy():
     """
     p = [0.1, 0.1]
     pb = PoiBin(p)
-    assert np.all(np.abs(pb.cdf([0, 2]) - np.array([0.81, 1.])) < 1e-10)
+    assert np.all(np.abs(pb.cdf([0, 2]) - np.array([0.81, 1.0])) < 1e-10)
     p = [0.5, 1.0]
     pb = PoiBin(p)
-    assert np.all(np.abs(pb.cdf([1, 2]) == np.array([0.5, 1.])) < 1e-10)
+    assert np.all(np.abs(pb.cdf([1, 2]) == np.array([0.5, 1.0])) < 1e-10)
     p = [0.1, 0.5]
     pb = PoiBin(p)
-    assert np.all(np.abs(pb.cdf([0, 1, 2]) == np.array([0.45, 0.95, 1.])) <
-                  1e-10)
+    assert np.all(np.abs(pb.cdf([0, 1, 2]) == np.array([0.45, 0.95, 1.0])) < 1e-10)
     p = [0.1, 0.5, 0.7]
     pb = PoiBin(p)
-    assert np.all(np.abs(pb.cdf([0, 1, 2]) == np.array([0.135, 0.6, 0.965])) <
-                  1e-10)
+    assert np.all(np.abs(pb.cdf([0, 1, 2]) == np.array([0.135, 0.6, 0.965])) < 1e-10)
+
 
 # PoiBin.pval ------------------------------------------------------------------
+
 
 def test_pval():
     """Test the p-values function."""
     p = [1, 1]
     pb = PoiBin(p)
 
-    assert np.all(pb.pval([1, 2]) - np.array([1., 1.]) <
-           4 * np.finfo(float).eps)
-    assert (pb.pval(2) - 1.) < 4 * np.finfo(float).eps
+    assert np.all(pb.pval([1, 2]) - np.array([1.0, 1.0]) < 4 * np.finfo(float).eps)
+    assert (pb.pval(2) - 1.0) < 4 * np.finfo(float).eps
+
 
 def test_pval_pb_binom():
     """Compare the p-values with the binomial limit case.
@@ -184,34 +200,39 @@ def test_pval_pb_binom():
     pval_bn = 1 - bn.cdf(k) + bn.pmf(k)
     pb = PoiBin(pp)
     pval_pb = pb.pval(k)
-    assert np.all(np.around(pval_bn, decimals=10) == np.around(pval_pb,
-                                                               decimals=10))
+    assert np.all(np.around(pval_bn, decimals=10) == np.around(pval_pb, decimals=10))
+
 
 # PoiBin.get_cdf ---------------------------------------------------------------
+
 
 def test_get_cdf():
     """Test that the right cumulative distribution function is obtained."""
     p = [1, 1]
     pb = PoiBin(p)
-    assert np.all(pb.get_cdf([1, 1, 1]) == np.array([1., 2., 3.]))
+    assert np.all(pb.get_cdf([1, 1, 1]) == np.array([1.0, 2.0, 3.0]))
+
 
 # PoiBin.get_pmf_xi ------------------------------------------------------------
+
 
 def test_get_pmf_xi():
     """Test that the correct pmf elements are obtained."""
     p = [0.2, 0.5]
     pb = PoiBin(p)
-    assert np.all(np.abs(pb.get_pmf_xi() - np.array([0.4, 0.5, 0.1])) <
-                  1e-10)
+    assert np.all(np.abs(pb.get_pmf_xi() - np.array([0.4, 0.5, 0.1])) < 1e-10)
     p = [0.3, 0.8]
     pb = PoiBin(p)
-    assert np.all(np.abs(pb.get_pmf_xi() - np.array([0.14, 0.62, 0.24])) <
-                  1e-10)
+    assert np.all(np.abs(pb.get_pmf_xi() - np.array([0.14, 0.62, 0.24])) < 1e-10)
     p = [0.3, 0.8, 0.3]
     pb = PoiBin(p)
-    assert np.all(np.abs(pb.get_pmf_xi() - np.array([0.098, 0.476, 0.354,
-                                                     0.072])) < 1e-10)
+    assert np.all(
+        np.abs(pb.get_pmf_xi() - np.array([0.098, 0.476, 0.354, 0.072])) < 1e-10
+    )
+
+
 # PoiBin.check_rv_input --------------------------------------------------------
+
 
 def test_check_rv_input():
     """Test tat inputs are positive integers."""
@@ -220,14 +241,16 @@ def test_check_rv_input():
     assert pb.check_rv_input([1, 2])
     assert pb.check_rv_input(2)
 
-    with pytest.raises(AssertionError,
-                       message="Input value cannot be negative."):
+    with pytest.raises(AssertionError) as err:
         pb.check_rv_input(-1)
-    with pytest.raises(AssertionError,
-                       message="Input value must be an integer."):
+        assert str(err.value) == "Input value cannot be negative."
+    with pytest.raises(AssertionError) as err:
         pb.check_rv_input(1.7)
+        assert str(err.value) == "Input value must be an integer."
+
 
 # PoiBin.check_xi_are_real -----------------------------------------------------
+
 
 def test_check_xi_are_real():
     """Test the check that the ``xi`` values are real."""
@@ -237,19 +260,21 @@ def test_check_xi_are_real():
     xi = np.array([1 + 99j, 1.8 + 0j], dtype=complex)
     assert not pb.check_xi_are_real(xi)
 
+
 # PoiBin.check_input_prob ------------------------------------------------------
+
 
 def test_check_input_prob():
     """Test the check that input probabilities are between 0 and 1."""
-    with pytest.raises(ValueError,
-                       message="Input must be an one-dimensional array or a"\
-                                + "list."):
-        pb = PoiBin([[1, 1], [1, 2]])
-    with pytest.raises(ValueError,
-                       message="Input probabilities have to be non negative."):
-        pb = PoiBin([1, -1])
-    with pytest.raises(ValueError,
-                       message="Input probabilities have to be smaller"\
-                               + "than 1."):
-        pb = PoiBin([1, 2])
+    with pytest.raises(
+        ValueError,
+    ) as err:
 
+        pb = PoiBin([[1, 1], [1, 2]])
+        assert str(err.value) == "Input must be an one-dimensional array or a list."
+    with pytest.raises(ValueError) as err:
+        pb = PoiBin([1, -1])
+        assert str(err.value) == "Input probabilities have to be non negative."
+    with pytest.raises(ValueError) as err:
+        pb = PoiBin([1, 2])
+        assert str(err.value) == "Input probabilities have to be smaller than 1."
